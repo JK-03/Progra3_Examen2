@@ -38,6 +38,10 @@ public:
     void actualizarTablaPublicaciones();
     void conectarBaseDatosLibros();
     void guardarPublicacionesEnBaseDeDatos();
+    void cargarPublicacionesDesdeBaseDatos();
+    void cargarEstudiantesDesdeBaseDatos();
+    void cargarVehiculosDesdeBaseDatos();
+    void cargarEmpleadosDesdeBaseDatos();
 
 private slots:
     void on_pushButton_clicked();

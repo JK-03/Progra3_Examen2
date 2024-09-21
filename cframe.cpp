@@ -21,6 +21,16 @@ cframe::cframe(QWidget *parent)
 {
     ui->setupUi(this);
 
+    cargarPublicacionesDesdeBaseDatos();
+    cargarEstudiantesDesdeBaseDatos();
+    cargarVehiculosDesdeBaseDatos();
+    cargarEmpleadosDesdeBaseDatos();
+
+    for (auto estudiante : estudiantes) delete estudiante;
+    for (auto vehiculo : vehiculos) delete vehiculo;
+    for (auto empleado : empleados) delete empleado;
+    for (auto publicacion : publicaciones) delete publicacion;
+
     conectarBaseDatosEstudiantes();
     conectarBaseDatosVehiculos();
     conectarBaseDatosEmpleados();
@@ -248,6 +258,27 @@ void cframe::guardarEstudiantesEnBaseDeDatos() {
     }
 }
 
+void cframe::cargarEstudiantesDesdeBaseDatos() {
+    QSqlQuery query("SELECT * FROM estudiantes");
+
+    while (query.next()) {
+        QString numeroCuenta = query.value("numero_cuenta").toString();
+        QString nombre = query.value("nombre").toString();
+        int edad = query.value("edad").toInt();
+        QString materia = query.value("materia").toString();
+        double calificacion = query.value("calificacion").toDouble();
+
+        int row = ui->tableWidget->rowCount();
+        ui->tableWidget->insertRow(row);
+        ui->tableWidget->setItem(row, 0, new QTableWidgetItem(numeroCuenta));
+        ui->tableWidget->setItem(row, 1, new QTableWidgetItem(nombre));
+        ui->tableWidget->setItem(row, 2, new QTableWidgetItem(QString::number(edad)));
+        ui->tableWidget->setItem(row, 3, new QTableWidgetItem(materia));
+        ui->tableWidget->setItem(row, 4, new QTableWidgetItem(QString::number(calificacion)));
+    }
+}
+
+
 //EJERCICIO #2
 void cframe::on_agregarVehiculo_clicked() {
     QString modelo = ui->LE_Modelo->text();
@@ -370,6 +401,27 @@ void cframe::guardarVehiculosEnBaseDeDatos() {
         }
     }
 }
+
+void cframe::cargarVehiculosDesdeBaseDatos() {
+    QSqlQuery query("SELECT * FROM vehiculos");
+
+    while (query.next()) {
+        QString modelo = query.value("modelo").toString();
+        int año = query.value("año").toInt();
+        float kilometraje = query.value("kilometraje").toFloat();
+        QString tipo = query.value("tipo").toString();
+        float costoMantenimiento = query.value("costo_mantenimiento").toFloat();
+
+        int row = ui->tableWidget->rowCount();
+        ui->tableWidget->insertRow(row);
+        ui->tableWidget->setItem(row, 0, new QTableWidgetItem(modelo));
+        ui->tableWidget->setItem(row, 1, new QTableWidgetItem(QString::number(año)));
+        ui->tableWidget->setItem(row, 2, new QTableWidgetItem(QString::number(kilometraje)));
+        ui->tableWidget->setItem(row, 3, new QTableWidgetItem(tipo));
+        ui->tableWidget->setItem(row, 4, new QTableWidgetItem(QString::number(costoMantenimiento)));
+    }
+}
+
 
 //EJERCICIO #3
 void cframe::on_agregarEmpleado_clicked()
@@ -641,6 +693,63 @@ void cframe::guardarPublicacionesEnBaseDeDatos() {
         if (!query.exec()) {
             QMessageBox::warning(this, "Error", "No se pudo guardar la publicación: " + query.lastError().text());
         }
+    }
+}
+
+void cframe::cargarPublicacionesDesdeBaseDatos() {
+    QSqlQuery query("SELECT * FROM publicaciones");
+
+    while (query.next()) {
+        std::string titulo = query.value("titulo").toString().toStdString();
+        std::string autor = query.value("autor").toString().toStdString();
+        int anioPublicacion = query.value("anio_publicacion").toInt();
+        bool disponible = query.value("disponible").toBool();
+        QString tipo = query.value("tipo").toString();
+
+        Publicacion* nuevaPublicacion = nullptr;
+
+        if (tipo == "Libro") {
+            int numeroPaginas = query.value("numero_paginas").toInt();
+            nuevaPublicacion = new Libro(titulo, autor, anioPublicacion, disponible, numeroPaginas);
+        } else if (tipo == "Revista") {
+            int numeroEdicion = query.value("numero_edicion").toInt();
+            nuevaPublicacion = new Revista(titulo, autor, anioPublicacion, disponible, numeroEdicion);
+        } else if (tipo == "Artículo Científico") {
+            int indiceImpacto = query.value("indice_impacto").toInt();
+            nuevaPublicacion = new ArticuloCientifico(titulo, autor, anioPublicacion, disponible, indiceImpacto);
+        }
+
+        if (nuevaPublicacion) {
+            publicaciones.push_back(nuevaPublicacion);
+        }
+    }
+}
+
+void cframe::cargarEmpleadosDesdeBaseDatos() {
+    QSqlQuery query("SELECT * FROM empleados");
+
+    while (query.next()) {
+        QString nombre = query.value("nombre").toString();
+        int edad = query.value("edad").toInt();
+        float salario = query.value("salario").toFloat();
+        QString tipo = query.value("tipo").toString();
+        int horasTrabajadas = query.value("horas_trabajadas").toInt();
+        float salarioCalculado = query.value("salario_calculado").toFloat();
+
+        if (tipo == "Fijo") {
+            empleados.push_back(new EmpleadoFijo(nombre.toStdString(), edad, salario));
+        } else if (tipo == "Contratado") {
+            empleados.push_back(new EmpleadoContratado(nombre.toStdString(), edad, salario, horasTrabajadas));
+        }
+
+        int row = ui->tableWidget->rowCount();
+        ui->tableWidget->insertRow(row);
+        ui->tableWidget->setItem(row, 0, new QTableWidgetItem(nombre));
+        ui->tableWidget->setItem(row, 1, new QTableWidgetItem(QString::number(edad)));
+        ui->tableWidget->setItem(row, 2, new QTableWidgetItem(QString::number(salario)));
+        ui->tableWidget->setItem(row, 3, new QTableWidgetItem(tipo));
+        ui->tableWidget->setItem(row, 4, new QTableWidgetItem(QString::number(horasTrabajadas)));
+        ui->tableWidget->setItem(row, 5, new QTableWidgetItem(QString::number(salarioCalculado)));
     }
 }
 
